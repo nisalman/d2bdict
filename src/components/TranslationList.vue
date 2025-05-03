@@ -66,14 +66,39 @@
           <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           Now Showing:
         </h3>
-        <p id="nowShowing" class="text-sm sm:text-base" :class="{ 'text-secondary italic': !result, 'text-primary': result }">{{ nowShowing }}</p>
+        <p id="nowShowing" class="text-sm sm:text-base" :class="{ 'text-secondary italic': !result && !results.length, 'text-primary': result || results.length }">{{ nowShowing }}</p>
       </div>
 
       <!-- Error Message -->
       <p id="errorMessage" class="text-red-500 text-center font-medium mb-6 text-sm sm:text-base" :class="{ hidden: !errorMessage }" role="alert">{{ errorMessage }}</p>
 
+      <!-- Search Results List -->
+      <div v-if="results.length && !result" class="mb-6">
+        <h3 class="text-lg font-semibold text-primary mb-4">Search Results</h3>
+        <ul class="space-y-3">
+          <li
+              v-for="item in results"
+              :key="item.german_word"
+              @click="selectResult(item)"
+              class="p-4 bg-section rounded-lg cursor-pointer hover:bg-gray-600 light:hover:bg-gray-200 transition"
+          >
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="text-lg font-medium text-primary">{{ item.german_word }}</p>
+                <p class="text-sm text-secondary">{{ item.english_meaning || item.bangla_meaning }}</p>
+              </div>
+              <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </div>
+          </li>
+        </ul>
+      </div>
+
       <!-- Result Display -->
-      <div id="resultDisplay" class="mt-6" :class="{ 'hidden': !result, 'fade-in': result }">
+      <div v-if="result" id="resultDisplay" class="mt-6 fade-in">
+        <button @click="backToResults" class="mb-4 text-accent hover:text-purple-400 flex items-center button-icon" aria-label="Back to results">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+          Back to Results
+        </button>
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-6 sm:mb-6">
           <div>
             <h2 id="resultWord" class="text-3xl sm:text-4xl font-bold text-primary mb-2">{{ result?.word }}</h2>
@@ -133,7 +158,7 @@
       <button v-if="isLoggedIn" @click="handleLogout" class="text-red-500 hover:text-red-600 transition button-icon" aria-label="Logout">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"></path></svg>
       </button>
-      <button v-if="isLoggedIn" @click="toggleFavorite" class="text-yellow-400 hover:text-yellow-500 transition button-icon" aria-label="Toggle favorite">
+      <button v-if="isLoggedIn && result" @click="toggleFavorite" class="text-yellow-400 hover:text-yellow-500 transition button-icon" aria-label="Toggle favorite">
         <svg id="favoriteIconMobile" class="w-6 h-6" :class="{ 'fill-current': favorites.includes(result?.word) }" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3 .922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.915a1 1 0 00.95-.69l1.519-4.674z"></path></svg>
       </button>
       <button @click="toggleTheme" class="text-accent hover:text-purple-400 transition button-icon" aria-label="Toggle theme">
@@ -163,7 +188,8 @@ export default {
       searchButtonText: 'Search',
       nowShowing: 'No word currently displayed',
       errorMessage: '',
-      result: null
+      result: null,
+      results: []
     };
   },
   mounted() {
@@ -231,6 +257,7 @@ export default {
       // Reset previous states
       this.errorMessage = '';
       this.result = null;
+      this.results = [];
       this.nowShowing = 'No word currently displayed';
 
       if (!searchInput) {
@@ -245,40 +272,10 @@ export default {
       try {
         const response = await getTranslations(searchInput, direction);
         if (response.success && response.data.length > 0) {
-          const apiData = response.data[0]; // Take the first result for simplicity
-
-          // Map API response to the component's expected structure
-          this.result = {
-            word: apiData.german_word,
-            phonetic: [
-              apiData.bangla_phonetics,  // Add Bangla phonetics directly
-              apiData.english_phonetics  // Add English phonetics directly
-            ],
-            translations: [
-              direction === 'german'
-                  ? `<span class="font-medium">English:</span> ${apiData.english_meaning}`
-                  : `<span class="font-medium">German:</span> ${apiData.german_word}`,
-              direction === 'german'
-                  ? `<span class="font-medium bangla">Bengali:</span> ${apiData.bangla_meaning}`
-                  : `<span class="font-medium bangla">Bengali:</span> ${apiData.bangla_meaning}`
-            ],
-            synonyms: [
-              `<span class="font-medium"></span> ${apiData.synonyms}`,
-            ],
-            antonyms: [
-              `<span class="font-medium"></span> ${apiData.synonyms}`,
-            ],
-            examples: [
-              `<span class="font-medium">German:</span> ${apiData.example_german}`,
-              `<span class="font-medium">English:</span> ${apiData.example_english}`,
-              `<span class="font-medium bangla">Bengali:</span> ${apiData.example_bangla}`
-            ],
-            nowShowing: direction === 'german'
-                ? `${apiData.german_word} - ${apiData.english_meaning}`
-                : `${apiData.english_meaning || apiData.bangla_meaning} - ${apiData.german_word}`
-          };
+          this.results = response.data; // Store all results
+          this.nowShowing = `${response.data.length} result(s) found for "${searchInput}"`;
         } else {
-          this.errorMessage = 'Word not found in the dictionary';
+          this.errorMessage = 'No words found in the dictionary';
         }
       } catch (error) {
         this.errorMessage = 'Failed to fetch translations. Please try again later.';
@@ -288,6 +285,39 @@ export default {
         this.isSearching = false;
         this.searchButtonText = 'Search';
       }
+    },
+    selectResult(item) {
+      const direction = this.translationDirection === 'german-to-english-bengali' ? 'german' : 'english';
+      // Map API response to the component's expected structure
+      this.result = {
+        word: item.german_word,
+        phonetic: [
+          item.bangla_phonetics,
+          item.english_phonetics
+        ],
+        translations: [
+          direction === 'german'
+              ? `<span class="font-medium">English:</span> ${item.english_meaning}`
+              : `<span class="font-medium">German:</span> ${item.german_word}`,
+          direction === 'german'
+              ? `<span class="font-medium bangla">Bengali:</span> ${item.bangla_meaning}`
+              : `<span class="font-medium bangla">Bengali:</span> ${item.bangla_meaning}`
+        ],
+        synonyms: item.synonyms ? [item.synonyms] : [],
+        antonyms: item.antonyms ? [item.antonyms] : [],
+        examples: [
+          `<span class="font-medium">German:</span> ${item.example_german}`,
+          `<span class="font-medium">English:</span> ${item.example_english}`,
+          `<span class="font-medium bangla">Bengali:</span> ${item.example_bangla}`
+        ]
+      };
+      this.nowShowing = direction === 'german'
+          ? `${item.german_word} - ${item.english_meaning}`
+          : `${item.english_meaning || item.bangla_meaning} - ${item.german_word}`;
+    },
+    backToResults() {
+      this.result = null;
+      this.nowShowing = `${this.results.length} result(s) found for "${this.searchInput}"`;
     }
   }
 };
