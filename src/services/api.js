@@ -1,14 +1,13 @@
 import axios from 'axios';
 
-// Configure Axios for your backend API
+
 const api = axios.create({
-    baseURL: 'https://api-d2b.salman.codes/api', // Adjust the URL as per your backend
+    baseURL: 'https://apid2b.nisalman.com/api', // Adjust the URL as per your backend
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Fetch translations or search translations with direction
 export const getTranslations = async (searchQuery = '', direction = 'german') => {
     try {
         let url = '/translations'; // Default URL for fetching all translations
@@ -26,7 +25,7 @@ export const getTranslations = async (searchQuery = '', direction = 'german') =>
     }
 };
 
-// Post a new translation
+
 export const postTranslation = async (translationData) => {
     try {
         const response = await api.post('/translations', translationData); // Send POST request to backend

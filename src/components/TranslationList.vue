@@ -1,178 +1,524 @@
 <template>
   <div
-      class="min-h-screen flex flex-col items-center justify-center p-4 transition-all"
-      :style="{ backgroundColor: theme === 'light' ? '#ffffff' : '#121212', color: theme === 'light' ? '#000000' : '#ffffff' }"
+      class="min-h-screen flex flex-col items-center p-4 transition-all"
+      :style="{
+      background: theme === 'light'
+        ? '#f4f4f5'
+        : 'radial-gradient(circle at top, #1e293b 0, #020617 55%, #000 100%)',
+      color: theme === 'light' ? '#020617' : '#e5e7eb'
+    }"
   >
-    <link href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <div class="flex-1 w-full max-w-3xl mx-auto">
-      <!-- Header -->
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-primary mb-4 sm:mb-0">D2B Dictionary</h1>
-        <div id="userSectionDesktop" class="hidden sm:flex items-center space-x-4">
-          <span id="userNameDesktop" class="text-secondary font-medium" :class="{ hidden: !isLoggedIn }">{{ `Hi, ${currentUser}` }}</span>
-          <button v-if="!isLoggedIn" @click="handleLogin" class="text-accent hover:text-purple-400 transition flex items-center button-icon">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14"></path></svg>
-            Login
+    <!-- PAGE WRAPPER -->
+    <div
+        class="w-full max-w-5xl flex-1 flex flex-col space-y-6 sm:space-y-8 pb-16 sm:pb-0"
+    >
+      <!-- NAVBAR -->
+      <header
+          class="w-full flex items-center justify-between px-3 sm:px-4 py-3 sm:py-4 rounded-2xl bg-black/10 backdrop-blur-md border border-white/5 shadow-lg"
+          :class="{ 'bg-white/80 border-gray-200 shadow-md': theme === 'light' }"
+      >
+        <div class="flex items-center space-x-3">
+          <div
+              class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-500 shadow-md"
+          >
+            <span class="text-xs sm:text-sm font-bold text-white">D2B</span>
+          </div>
+          <div>
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">
+              D2B Dictionary
+            </h1>
+            <p class="text-xs sm:text-sm text-secondary">
+              German ⇄ English &amp; Bangla, made easier.
+            </p>
+          </div>
+        </div>
+
+        <div class="hidden sm:flex items-center space-x-3">
+          <span
+              v-if="isLoggedIn"
+              class="px-3 py-1 rounded-full text-xs sm:text-sm bg-purple-500/10 text-purple-300 border border-purple-500/40"
+              :class="{
+              'bg-purple-100 text-purple-700 border-purple-200': theme === 'light'
+            }"
+          >
+            Hi, {{ currentUser }}
+          </span>
+
+          <button
+              v-if="!isLoggedIn"
+              @click="handleLogin"
+              class="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium flex items-center space-x-1
+                   bg-purple-500 hover:bg-purple-600 text-white shadow-md transition button-icon"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 16l-4-4m0 0l4-4m-4 4h14" />
+            </svg>
+            <span>Login</span>
           </button>
-          <button v-if="isLoggedIn" @click="handleLogout" class="text-red-500 hover:text-red-600 transition flex items-center button-icon">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"></path></svg>
-            Logout
+
+          <button
+              v-else
+              @click="handleLogout"
+              class="px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium flex items-center space-x-1
+                   bg-red-500/10 text-red-400 border border-red-500/40 hover:bg-red-500/20 transition button-icon"
+              :class="{
+              'bg-red-100 text-red-700 border-red-200 hover:bg-red-200': theme === 'light'
+            }"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7" />
+            </svg>
+            <span>Logout</span>
           </button>
-          <button @click="toggleTheme" class="p-2 rounded-full hover:bg-gray-700 light:hover:bg-gray-200 transition button-icon" aria-label="Toggle theme">
-            <svg id="themeIcon" class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path v-if="theme === 'light'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+
+          <button
+              @click="toggleTheme"
+              class="p-2 rounded-full hover:bg-white/10 transition button-icon flex items-center justify-center"
+              :class="{ 'hover:bg-gray-100 text-gray-700': theme === 'light' }"
+              aria-label="Toggle theme"
+          >
+            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                  v-if="theme === 'light'"
+                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              />
+              <path
+                  v-else
+                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+              />
             </svg>
           </button>
         </div>
-      </div>
-      <!-- User Info for Mobile -->
-      <div id="userSectionMobile" class="sm:hidden mb-4">
-        <span id="userNameMobile" class="text-secondary font-medium" :class="{ hidden: !isLoggedIn }">{{ `Hi, ${currentUser}` }}</span>
+      </header>
+
+      <!-- MOBILE USER LINE -->
+      <div class="sm:hidden flex items-center justify-between text-xs mb-1">
+        <span v-if="isLoggedIn" class="text-secondary">
+          Hi, {{ currentUser }}
+        </span>
+        <span class="text-secondary">
+          Favourites: <span class="font-semibold">{{ favorites.length }}</span>
+        </span>
       </div>
 
-      <!-- Search Bar and Translation Direction -->
-      <div class="mb-6 sm:mb-8">
-        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-          <input
-              type="text"
-              v-model="searchInput"
-              placeholder="Search for any word..."
-              class="flex-1 p-3 sm:p-4 border border-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 input-dark text-sm sm:text-base"
-              aria-label="Search word"
-          />
-          <select
-              v-model="translationDirection"
-              class="p-3 sm:p-4 border border-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 input-dark text-sm sm:text-base"
-              aria-label="Translation direction"
+      <!-- MAIN CONTENT GRID -->
+      <main class="flex-1 flex flex-col gap-4 sm:gap-6">
+        <!-- SEARCH + STATUS + RESULTS -->
+        <section class="space-y-4 sm:space-y-6">
+          <!-- SEARCH CARD -->
+          <div
+              class="rounded-2xl p-4 sm:p-5 bg-black/30 border border-white/10 shadow-xl backdrop-blur-md"
+              :class="{ 'bg-white shadow-md border-gray-200': theme === 'light' }"
           >
-            <option value="german-to-english-bengali">German to English/Bengali</option>
-            <option value="english-bengali-to-german">English/Bengali to German</option>
-          </select>
-        </div>
-        <button
-            @click="handleSearch"
-            class="mt-3 w-full search-button text-white p-3 sm:p-4 rounded-lg transition flex items-center justify-center button-icon"
-            aria-label="Search"
-        >
-          <span id="searchButtonText">{{ searchButtonText }}</span>
-          <span id="spinner" class="spinner ml-2" :class="{ hidden: !isSearching }"></span>
-        </button>
-      </div>
-
-      <!-- Now Showing Section -->
-      <div class="mb-6 sm:mb-8">
-        <h3 class="text-base sm:text-lg font-semibold text-primary flex items-center">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          Now Showing:
-        </h3>
-        <p id="nowShowing" class="text-sm sm:text-base" :class="{ 'text-secondary italic': !result && !results.length, 'text-primary': result || results.length }">{{ nowShowing }}</p>
-      </div>
-
-      <!-- Error Message -->
-      <p id="errorMessage" class="text-red-500 text-center font-medium mb-6 text-sm sm:text-base" :class="{ hidden: !errorMessage }" role="alert">{{ errorMessage }}</p>
-
-      <!-- Search Results List -->
-      <div v-if="results.length && !result" class="mb-6">
-        <h3 class="text-lg font-semibold text-primary mb-4">Search Results</h3>
-        <ul class="space-y-3">
-          <li
-              v-for="item in results"
-              :key="item.german_word"
-              @click="selectResult(item)"
-              class="p-4 bg-section rounded-lg cursor-pointer hover:bg-gray-600 light:hover:bg-gray-200 transition"
-          >
-            <div class="flex justify-between items-center">
+            <div class="flex items-center justify-between mb-3">
               <div>
-                <p class="text-lg font-medium text-primary">{{ item.german_word }}</p>
-                <p class="text-sm text-secondary">{{ item.english_meaning || item.bangla_meaning }}</p>
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-secondary">
+                  Search
+                </h2>
+                <p class="text-xs text-secondary">
+                  Start typing to get instant suggestions.
+                </p>
               </div>
-              <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              <span
+                  class="text-[10px] px-2 py-1 rounded-full bg-black/40 text-secondary"
+                  :class="{ 'bg-gray-100 text-gray-600': theme === 'light' }"
+              >
+          Favorites: {{ favorites.length }}
+        </span>
             </div>
-          </li>
-        </ul>
-      </div>
 
-      <!-- Result Display -->
-      <div v-if="result" id="resultDisplay" class="mt-6 fade-in">
-        <button @click="backToResults" class="mb-4 text-accent hover:text-purple-400 flex items-center button-icon" aria-label="Back to results">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-          Back to Results
-        </button>
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-6 sm:mb-6">
-          <div>
-            <h2 id="resultWord" class="text-3xl sm:text-4xl font-bold text-primary mb-2">{{ result?.word }}</h2>
-            <div class="flex items-center space-x-2">
-              <span id="phoneticDisplay" class="text-secondary italic text-sm sm:text-base">{{ result?.phonetic || 'Not available' }}</span>
-              <button id="phoneticButton" @click="playPhonetic" class="audio-button phonetic-button text-accent hover:text-purple-400">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7V5z"></path></svg>
+            <div class="flex flex-col space-y-3">
+              <div class="flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                <div class="relative flex-1">
+                  <input
+                      type="text"
+                      v-model="searchInput"
+                      @input="handleInput"
+                      @keyup.enter="handleSearch"
+                      placeholder="Search for any word..."
+                      class="w-full pl-9 pr-3 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base
+                     border border-accent/40 input-dark focus:outline-none focus:ring-2
+                     focus:ring-purple-500/70 focus:border-purple-500/70"
+                      aria-label="Search word"
+                  />
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-accent">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-4.35-4.35M5 11a6 6 0 1112 0 6 6 0 01-12 0z"
+                />
+              </svg>
+            </span>
+
+                  <!-- AUTOCOMPLETE -->
+                  <ul
+                      v-if="suggestions.length"
+                      class="absolute z-20 mt-2 w-full rounded-xl bg-section border border-white/10 shadow-lg max-h-60 overflow-auto"
+                      :class="{ 'bg-white border-gray-200': theme === 'light' }"
+                  >
+                    <li
+                        v-for="item in suggestions"
+                        :key="item.id || item.german_word || item.english_meaning"
+                        @click="useSuggestion(item)"
+                        class="px-3 py-2 text-sm cursor-pointer flex justify-between items-center
+                       hover:bg-white/10 light:hover:bg-gray-100 transition"
+                    >
+                      <div>
+                        <p class="font-medium text-primary">{{ item.german_word }}</p>
+                        <p class="text-xs text-secondary">
+                          {{ item.english_meaning || item.bangla_meaning }}
+                        </p>
+                      </div>
+                      <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </li>
+                  </ul>
+                </div>
+
+                <select
+                    v-model="translationDirection"
+                    class="w-full sm:w-56 px-3 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-medium
+                   border border-accent/40 input-dark focus:outline-none focus:ring-2
+                   focus:ring-purple-500/70 focus:border-purple-500/70"
+                    aria-label="Translation direction"
+                >
+                  <option value="german-to-english-bengali">German → English/Bengali</option>
+                  <option value="english-bengali-to-german">English/Bengali → German</option>
+                </select>
+              </div>
+
+              <button
+                  @click="handleSearch"
+                  class="w-full mt-1 search-button text-white py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold
+                 flex items-center justify-center space-x-2 button-icon"
+                  aria-label="Search"
+              >
+                <span>{{ searchButtonText }}</span>
+                <span v-if="isSearching" class="spinner ml-2"></span>
               </button>
             </div>
           </div>
-          <button v-if="isLoggedIn" id="favoriteButtonDesktop" @click="toggleFavorite" class="sm:block hidden text-yellow-400 hover:text-yellow-500 transition star mt-2 sm:mt-0" aria-label="Toggle favorite">
-            <svg class="w-6 h-6 sm:w-8 sm:h-8" :class="{ 'fill-current': favorites.includes(result?.word) }" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3 .922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.915a1 1 0 00.95-.69l1.519-4.674z"></path></svg>
-          </button>
+
+          <!-- STATUS / ERROR -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 1010 10A10 10 0 0012 2z"
+                  />
+                </svg>
+                <h3 class="text-sm font-semibold text-primary">Now Showing</h3>
+              </div>
+              <span class="text-xs text-secondary">
+          {{ results.length }} result(s)
+        </span>
+            </div>
+            <p
+                class="text-sm sm:text-base"
+                :class="{
+          'text-secondary italic': !result && !results.length,
+          'text-primary': result || results.length
+        }"
+            >
+              {{ nowShowing }}
+            </p>
+
+            <p
+                v-if="errorMessage"
+                class="text-xs sm:text-sm text-red-400 font-medium mt-1"
+                role="alert"
+            >
+              {{ errorMessage }}
+            </p>
+          </div>
+
+          <!-- SEARCH RESULTS LIST -->
+          <div v-if="results.length && !result" class="space-y-3">
+            <h3 class="text-sm sm:text-base font-semibold text-primary">
+              Tap a word to see full details
+            </h3>
+            <ul class="space-y-3">
+              <li
+                  v-for="item in results"
+                  :key="item.id || item.german_word || item.english_meaning"
+                  @click="selectResult(item)"
+                  class="p-3 sm:p-4 rounded-2xl bg-section border border-white/5 cursor-pointer
+                 hover:bg-white/5 transition flex justify-between items-center"
+                  :class="{ 'bg-white border-gray-200 hover:bg-gray-50': theme === 'light' }"
+              >
+                <div>
+                  <p class="text-base sm:text-lg font-semibold text-primary">
+                    {{ item.german_word }}
+                  </p>
+                  <p class="text-xs sm:text-sm text-secondary">
+                    {{ item.english_meaning || item.bangla_meaning }}
+                  </p>
+                </div>
+                <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- DETAILS OR PLACEHOLDER, ALWAYS BELOW SEARCH/RESULTS -->
+        <section v-if="result">
+          <div
+              id="resultDisplay"
+              class="fade-in rounded-2xl p-4 sm:p-5 bg-black/30 border border-white/10 shadow-xl backdrop-blur-md flex flex-col"
+              :class="{ 'bg-white shadow-md border-gray-200': theme === 'light' }"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h2 id="resultWord" class="text-2xl sm:text-3xl font-bold text-primary mb-1">
+                  {{ result?.word }}
+                </h2>
+                <div class="flex items-center space-x-2 text-xs sm:text-sm text-secondary">
+            <span id="phoneticDisplay" class="italic">
+              {{ result?.phonetic || 'Phonetic not available' }}
+            </span>
+                  <button
+                      id="phoneticButton"
+                      @click="playPhonetic"
+                      class="audio-button phonetic-button text-accent hover:text-purple-400"
+                      aria-label="Play phonetic"
+                  >
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5l7 7-7 7V5z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-2">
+                <button
+                    v-if="isLoggedIn"
+                    id="favoriteButtonDesktop"
+                    @click="toggleFavorite"
+                    class="hidden sm:inline-flex text-yellow-400 hover:text-yellow-500 transition star"
+                    aria-label="Toggle favorite"
+                >
+                  <svg
+                      class="w-7 h-7"
+                      :class="{ 'fill-current': favorites.includes(result?.word) }"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.915a1 1 0 00.95-.69l1.519-4.674z" />
+                  </svg>
+                </button>
+
+                <button
+                    @click="backToResults"
+                    class="px-2.5 py-1.5 rounded-full border border-white/20 text-xs sm:text-sm text-secondary
+                   hover:bg-white/10 button-icon"
+                    :class="{
+              'border-gray-200 hover:bg-gray-100 hover:text-gray-800': theme === 'light'
+            }"
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-4 text-sm sm:text-base overflow-auto">
+              <div>
+                <p class="font-semibold text-primary mb-1">Translations</p>
+                <ul id="translations" class="list-disc pl-5 text-secondary space-y-1">
+                  <li
+                      v-for="(translation, index) in result?.translations"
+                      :key="index"
+                      v-html="translation"
+                  />
+                </ul>
+              </div>
+
+              <div
+                  v-if="result?.synonyms?.length && result?.synonyms[0] !== 'null' && result?.synonyms[0] !== ''"
+              >
+                <p class="font-semibold text-primary mb-1">Synonyms</p>
+                <ul id="synonyms" class="flex flex-wrap gap-1.5 text-xs sm:text-sm">
+                  <li
+                      v-for="(synonym, index) in result?.synonyms"
+                      :key="index"
+                      class="px-2 py-1 rounded-full bg-purple-500/10 text-accent"
+                      v-html="synonym"
+                  />
+                </ul>
+              </div>
+
+              <div
+                  v-if="result?.antonyms?.length && result?.antonyms[0] !== 'null' && result?.antonyms[0] !== ''"
+              >
+                <p class="font-semibold text-primary mb-1">Antonyms</p>
+                <ul id="antonyms" class="flex flex-wrap gap-1.5 text-xs sm:text-sm">
+                  <li
+                      v-for="(antonym, index) in result?.antonyms"
+                      :key="index"
+                      class="px-2 py-1 rounded-full bg-slate-500/10 text-secondary"
+                      v-html="antonym"
+                  />
+                </ul>
+              </div>
+
+              <div>
+                <p class="font-semibold text-primary mb-1">Example Sentences</p>
+                <ul id="examples" class="list-disc pl-5 text-secondary space-y-1">
+                  <li
+                      v-for="(example, index) in result?.examples"
+                      :key="index"
+                      v-html="example"
+                  />
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PLACEHOLDER WHEN NO RESULT SELECTED -->
+        <section v-else>
+          <div
+              class="w-full text-center text-secondary text-xs sm:text-sm px-4 py-6 rounded-2xl border border-dashed border-white/10 bg-black/20"
+              :class="{ 'border-gray-300 bg-white/60': theme === 'light' }"
+          >
+            <p class="font-medium mb-1">No word selected yet</p>
+            <p>Search and pick a result above to see full details here.</p>
+          </div>
+        </section>
+      </main>
+
+
+      <!-- TOAST POPUP -->
+      <transition name="toast">
+        <div
+            v-if="toastMessage"
+            class="fixed left-1/2 -translate-x-1/2 bottom-20 z-50 max-w-xs w-[90%] px-4 py-3 rounded-xl text-xs sm:text-sm text-white shadow-lg bg-black/80 backdrop-blur"
+            :class="{ 'bg-gray-900/90': theme !== 'light', 'bg-gray-800': theme === 'light' }"
+        >
+          {{ toastMessage }}
         </div>
-        <div class="space-y-6">
-          <div>
-            <p class="text-base sm:text-lg font-semibold text-primary">Translations</p>
-            <ul id="translations" class="list-disc pl-5 mt-2 text-secondary text-sm sm:text-base">
-              <li v-for="(translation, index) in result?.translations" :key="index" class="mt-1" v-html="translation"></li>
-            </ul>
-          </div>
+      </transition>
 
-          <!-- Synonyms Section (Hidden if empty or null) -->
-          <div v-if="result?.synonyms?.length && result?.synonyms[0] !== 'null' && result?.synonyms[0] !== ''">
-            <p class="text-base sm:text-lg font-semibold text-primary">Synonyms</p>
-            <ul id="synonyms" class="list-disc pl-5 mt-2 text-accent text-sm sm:text-base">
-              <li v-for="(synonym, index) in result?.synonyms" :key="index" class="mt-1" v-html="synonym"></li>
-            </ul>
-          </div>
-
-          <!-- Antonyms Section (Hidden if empty or null) -->
-          <div v-if="result?.antonyms?.length && result?.antonyms[0] !== 'null' && result?.antonyms[0] !== ''">
-            <p class="text-base sm:text-lg font-semibold text-primary">Antonyms</p>
-            <ul id="antonyms" class="list-disc pl-5 mt-2 text-secondary text-sm sm:text-base">
-              <li v-for="(antonym, index) in result?.antonyms" :key="index" class="mt-1" v-html="antonym"></li>
-            </ul>
-          </div>
-
-          <div>
-            <p class="text-base sm:text-lg font-semibold text-primary">Example Sentences</p>
-            <ul id="examples" class="list-disc pl-5 mt-2 text-secondary text-sm sm:text-base">
-              <li v-for="(example, index) in result?.examples" :key="index" class="mt-1" v-html="example"></li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      <!-- MOBILE BOTTOM NAV -->
+      <nav
+          class="sm:hidden fixed bottom-0 left-0 right-0 bottom-nav flex justify-around items-center p-3 transition-all"
+      >
+        <button
+            v-if="isLoggedIn"
+            @click="handleUserAction"
+            class="text-accent hover:text-purple-400 transition button-icon"
+            aria-label="User action"
+        >
+          <svg id="userIconMobile" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </button>
+        <button
+            v-if="!isLoggedIn"
+            @click="handleLogin"
+            class="text-accent hover:text-purple-400 transition button-icon"
+            aria-label="Login"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11 16l-4-4m0 0l4-4m-4 4h14" />
+          </svg>
+        </button>
+        <button
+            v-if="isLoggedIn"
+            @click="handleLogout"
+            class="text-red-500 hover:text-red-600 transition button-icon"
+            aria-label="Logout"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7"></path>
+          </svg>
+        </button>
+        <button
+            v-if="isLoggedIn && result"
+            @click="toggleFavorite"
+            class="text-yellow-400 hover:text-yellow-500 transition button-icon"
+            aria-label="Toggle favorite"
+        >
+          <svg
+              id="favoriteIconMobile"
+              class="w-6 h-6"
+              :class="{ 'fill-current': favorites.includes(result?.word) }"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.915a1 1 0 00.95-.69l1.519-4.674z" />
+          </svg>
+        </button>
+        <button
+            @click="toggleTheme"
+            class="text-accent hover:text-purple-400 transition button-icon"
+            aria-label="Toggle theme"
+        >
+          <svg id="themeIconMobile" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+                v-if="theme === 'light'"
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            />
+            <path
+                v-else
+                stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+            />
+          </svg>
+        </button>
+      </nav>
     </div>
+    <!-- Desktop copyright footer -->
+    <footer
+        class="hidden sm:flex fixed bottom-3 left-0 right-0 justify-center z-40 pointer-events-none"
+    >
+      <div
+          class="px-4 py-1.5 rounded-full text-[11px] sm:text-xs text-secondary bg-black/40 border border-white/10 backdrop-blur pointer-events-auto"
+          :class="{
+          'bg-white/90 border-gray-200 text-gray-600': theme === 'light'
+        }"
+      >
+        Powered by
+        <span class="font-medium">© 2025 D2B Dictionary. All rights reserved. <strong>Noor Islam Salman</strong> </span>
+        <span class="mx-1">·</span>
+        <a
+            href="https://nisalman.com"
+            target="_blank"
+            rel="noopener"
+            class="underline underline-offset-2"
+        >
+          nisalman.com
+        </a>
+      </div>
+    </footer>
 
-    <!-- Bottom Navigation for Mobile -->
-    <nav class="sm:hidden fixed bottom-0 left-0 right-0 bottom-nav flex justify-around items-center p-3 transition-all">
-      <button v-if="isLoggedIn" @click="handleUserAction" class="text-accent hover:text-purple-400 transition button-icon" aria-label="User action">
-        <svg id="userIconMobile" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-      </button>
-      <button v-if="!isLoggedIn" @click="handleLogin" class="text-accent hover:text-purple-400 transition button-icon" aria-label="Login">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14"></path></svg>
-      </button>
-      <button v-if="isLoggedIn" @click="handleLogout" class="text-red-500 hover:text-red-600 transition button-icon" aria-label="Logout">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7"></path></svg>
-      </button>
-      <button v-if="isLoggedIn && result" @click="toggleFavorite" class="text-yellow-400 hover:text-yellow-500 transition button-icon" aria-label="Toggle favorite">
-        <svg id="favoriteIconMobile" class="w-6 h-6" :class="{ 'fill-current': favorites.includes(result?.word) }" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3 .922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.915a1 1 0 00.95-.69l1.519-4.674z"></path></svg>
-      </button>
-      <button @click="toggleTheme" class="text-accent hover:text-purple-400 transition button-icon" aria-label="Toggle theme">
-        <svg id="themeIconMobile" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path v-if="theme === 'light'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      </button>
-    </nav>
-  </div>
+
+</div>
 </template>
 
 <script>
-import { getTranslations } from '../services/api'; // Import the API service
+import { getTranslations } from '../services/api';
 
 export default {
   name: 'TranslationList',
@@ -189,29 +535,33 @@ export default {
       nowShowing: 'No word currently displayed',
       errorMessage: '',
       result: null,
-      results: []
+      results: [],
+      suggestions: [],
+      toastMessage: '' // for small popup
     };
   },
   mounted() {
-    console.log('Component mounted, applying theme:', this.theme);
     this.updateTheme();
   },
   methods: {
     toggleTheme() {
       this.theme = this.theme === 'light' ? 'dark' : 'light';
       localStorage.setItem('theme', this.theme);
-      console.log('Theme toggled to:', this.theme);
       this.updateTheme();
     },
     updateTheme() {
       const body = document.body;
-      console.log('Updating theme on body:', this.theme);
       if (this.theme === 'light') {
         body.classList.add('light');
       } else {
         body.classList.remove('light');
       }
-      console.log('Body classes after update:', body.classList.toString());
+    },
+    showToast(message) {
+      this.toastMessage = message;
+      setTimeout(() => {
+        this.toastMessage = '';
+      }, 2500);
     },
     handleLogin() {
       this.currentUser = prompt('Enter your username:') || 'User';
@@ -237,8 +587,8 @@ export default {
       }
     },
     toggleFavorite() {
-      if (!this.isLoggedIn) return;
-      const currentWord = this.result?.word;
+      if (!this.isLoggedIn || !this.result) return;
+      const currentWord = this.result.word;
       if (this.favorites.includes(currentWord)) {
         this.favorites = this.favorites.filter(word => word !== currentWord);
       } else {
@@ -250,11 +600,14 @@ export default {
       const phonetic = this.result?.phonetic || 'Not available';
       alert(`Playing phonetic: ${phonetic}`);
     },
+
     async handleSearch() {
       const searchInput = this.searchInput.trim();
-      const direction = this.translationDirection === 'german-to-english-bengali' ? 'german' : 'english';
+      const direction =
+          this.translationDirection === 'german-to-english-bengali'
+              ? 'german'
+              : 'english';
 
-      // Reset previous states
       this.errorMessage = '';
       this.result = null;
       this.results = [];
@@ -265,43 +618,80 @@ export default {
         return;
       }
 
-      // Show loading spinner
       this.isSearching = true;
       this.searchButtonText = 'Searching...';
 
       try {
-        const response = await getTranslations(searchInput, direction);
-        if (response.success && response.data.length > 0) {
-          this.results = response.data; // Store all results
-          this.nowShowing = `${response.data.length} result(s) found for "${searchInput}"`;
+        const raw = await getTranslations(searchInput, direction);
+        const results = Array.isArray(raw) ? raw : raw.data || [];
+
+        if (results.length > 0) {
+          this.results = results;
+          this.nowShowing = `${results.length} result(s) found for "${searchInput}"`;
         } else {
-          this.errorMessage = 'No words found in the dictionary';
+          this.nowShowing = 'No word currently displayed';
+          this.errorMessage = '';
+          this.showToast(
+              "Word isn't available in the database. It will be updated soon."
+          );
         }
       } catch (error) {
-        this.errorMessage = 'Failed to fetch translations. Please try again later.';
+        this.errorMessage = '';
+        this.showToast('Unable to reach the server. Please try again.');
         console.error('Search error:', error);
       } finally {
-        // Reset button
         this.isSearching = false;
         this.searchButtonText = 'Search';
       }
     },
+
+    async handleInput() {
+      const term = this.searchInput.trim();
+      const direction =
+          this.translationDirection === 'german-to-english-bengali'
+              ? 'german'
+              : 'english';
+
+      if (term.length < 2) {
+        this.suggestions = [];
+        return;
+      }
+
+      try {
+        const raw = await getTranslations(term, direction);
+        const results = Array.isArray(raw) ? raw : raw.data || [];
+        this.suggestions = results.slice(0, 5);
+      } catch (error) {
+        console.error('Autocomplete error:', error);
+        this.suggestions = [];
+      }
+    },
+    useSuggestion(item) {
+      this.searchInput = item.german_word || item.english_meaning || '';
+      this.suggestions = [];
+      this.handleSearch();
+    },
+
     selectResult(item) {
-      const direction = this.translationDirection === 'german-to-english-bengali' ? 'german' : 'english';
-      // Map API response to the component's expected structure
+      const direction =
+          this.translationDirection === 'german-to-english-bengali'
+              ? 'german'
+              : 'english';
+      const isGerman = direction === 'german';
+
       this.result = {
-        word: item.german_word,
-        phonetic: [
-          item.bangla_phonetics,
-          item.english_phonetics
-        ],
+        word: isGerman
+            ? item.german_word
+            : item.english_meaning || item.bangla_meaning,
+        phonetic:
+            item.english_phonetics ||
+            item.bangla_phonetics ||
+            '',
         translations: [
-          direction === 'german'
+          isGerman
               ? `<span class="font-medium">English:</span> ${item.english_meaning}`
               : `<span class="font-medium">German:</span> ${item.german_word}`,
-          direction === 'german'
-              ? `<span class="font-medium bangla">Bengali:</span> ${item.bangla_meaning}`
-              : `<span class="font-medium bangla">Bengali:</span> ${item.bangla_meaning}`
+          `<span class="font-medium bangla">Bengali:</span> ${item.bangla_meaning}`
         ],
         synonyms: item.synonyms ? [item.synonyms] : [],
         antonyms: item.antonyms ? [item.antonyms] : [],
@@ -311,10 +701,12 @@ export default {
           `<span class="font-medium bangla">Bengali:</span> ${item.example_bangla}`
         ]
       };
-      this.nowShowing = direction === 'german'
+
+      this.nowShowing = isGerman
           ? `${item.german_word} - ${item.english_meaning}`
           : `${item.english_meaning || item.bangla_meaning} - ${item.german_word}`;
     },
+
     backToResults() {
       this.result = null;
       this.nowShowing = `${this.results.length} result(s) found for "${this.searchInput}"`;
@@ -324,120 +716,111 @@ export default {
 </script>
 
 <style scoped>
-/* Component-specific styles */
 .fade-in {
   animation: fadeIn 0.6s ease-in;
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .spinner {
-  border: 4px solid #4b5563;
-  border-top: 4px solid #8b5cf6;
+  border: 3px solid #4b5563;
+  border-top: 3px solid #8b5cf6;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   animation: spin 1s linear infinite;
 }
 .light .spinner {
-  border: 4px solid #d1d5db;
-  border-top: 4px solid #8b5cf6;
+  border: 3px solid #d1d5db;
+  border-top: 3px solid #8b5cf6;
 }
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 .text-primary {
-  color: #ffffff;
+  color: #f9fafb;
 }
 .light .text-primary {
-  color: #000000;
+  color: #020617;
 }
 .text-secondary {
-  color: #d1d5db;
+  color: #9ca3af;
 }
 .light .text-secondary {
   color: #4b5563;
 }
 .text-accent {
-  color: #8b5cf6;
+  color: #a855f7;
 }
 .light .text-accent {
-  color: #8b5cf6;
+  color: #7c3aed;
 }
 .border-accent {
   border-color: #8b5cf6;
 }
-.light .border-accent {
-  border-color: #8b5cf6;
-}
 .bg-section {
-  background-color: #1f2937;
+  background-color: #111827;
 }
 .light .bg-section {
-  background-color: #f3f4f6;
+  background-color: #f9fafb;
 }
 .button-icon {
-  transition: transform 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .button-icon:hover {
-  transform: scale(1.1);
+  transform: translateY(-1px) scale(1.03);
 }
 .bottom-nav {
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.3);
-  background-color: #1f2937;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+  background-color: #020617;
 }
 .light .bottom-nav {
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
   background-color: #ffffff;
-}
-.audio-button:hover {
-  color: #a78bfa;
-}
-.light .audio-button:hover {
-  color: #a78bfa;
-}
-.star:hover {
-  transform: scale(1.2);
-}
-.transition-all {
-  transition: all 0.3s ease;
-}
-.phonetic-button svg {
-  width: 24px;
-  height: 24px;
-}
-.input-dark {
-  background-color: #1f2937;
-  color: #ffffff;
-  border-color: #4b5563;
-}
-.light .input-dark {
-  background-color: #ffffff;
-  color: #000000;
-  border-color: #d1d5db;
 }
 .search-button {
   border: 1px solid #4b5563;
-  background-color: #1f2937;
+  background: linear-gradient(to right, #7c3aed, #4f46e5);
   color: #ffffff;
 }
 .light .search-button {
-  border: 1px solid #d1d5db;
-  background-color: #ffffff;
-  color: #000000;
+  border: 1px solid #c4b5fd;
 }
 .search-button:hover {
-  background-color: #a78bfa;
-  color: #ffffff;
-}
-.light .search-button:hover {
-  background-color: #a78bfa;
-  color: #ffffff;
+  filter: brightness(1.08);
 }
 .bangla {
   font-family: 'Solaimalipi', 'Kalpurush', 'Siyam Rupali', sans-serif;
-  font-size: 1.1rem;
+}
+.input-dark {
+  background-color: #020617;
+  color: #e5e7eb;
+  border-color: #374151;
+}
+.light .input-dark {
+  background-color: #ffffff;
+  color: #111827;
+  border-color: #d1d5db;
 }
 </style>
